@@ -35,6 +35,7 @@
 #include <string.h>
 #include <windowsx.h>
 #include <shellapi.h>
+#include <imm.h>
 
 // Returns the window style for the specified window
 //
@@ -485,6 +486,17 @@ static void releaseMonitor(_GLFWwindow* window)
     _glfwRestoreVideoModeWin32(window->monitor);
 }
 
+// Set cursor position to decide candidate window
+//
+static void updateCaretPosition(_GLFWwindow* window, HIMC imc)
+{
+    const int x = window->preeditCaretPosX;
+    const int y = window->preeditCaretPosY;
+    const int h = window->preeditCaretHeight;
+    CANDIDATEFORM excludeRect = { 0, CFS_EXCLUDE, { x, y }, { x, y, x, y + h } };
+    ImmSetCandidateWindow(imc, &excludeRect);
+}
+
 // Window callback function (handles window messages)
 //
 static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
@@ -684,8 +696,13 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
                 return TRUE;
             }
 
+<<<<<<< HEAD
             _glfwInputChar(window, (unsigned int) wParam, getKeyMods(), GLFW_TRUE);
             return 0;
+=======
+            _glfwInputChar(window, (unsigned int) wParam, getKeyMods(), plain);
+            return TRUE;
+>>>>>>> glfw-premake-project
         }
 
         case WM_KEYDOWN:
@@ -768,6 +785,81 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
             }
             else
                 _glfwInputKey(window, key, scancode, action, mods);
+
+            break;
+        }
+
+        case WM_IME_COMPOSITION:
+        {
+            HIMC imc;
+            LONG textSize, attrSize, clauseSize;
+            int i, focusedBlock, length;
+            LPWSTR buffer;
+            LPSTR attributes;
+            DWORD* clauses;
+
+            if (lParam & GCS_RESULTSTR)
+            {
+                window->preeditBlockCount = 0;
+                _glfwInputPreedit(window, 0);
+                return TRUE;
+            }
+
+            if (!(lParam & GCS_COMPSTR))
+                break;
+
+            imc = ImmGetContext(hWnd);
+            textSize = ImmGetCompositionStringW(imc, GCS_COMPSTR, NULL, 0);
+            attrSize = ImmGetCompositionStringW(imc, GCS_COMPATTR, NULL, 0);
+            clauseSize = ImmGetCompositionStringW(imc, GCS_COMPCLAUSE, NULL, 0);
+
+            if (textSize <= 0)
+            {
+                ImmReleaseContext(hWnd, imc);
+                return TRUE;
+            }
+
+            length = textSize / sizeof(WCHAR);
+            buffer = calloc(length + 1, sizeof(WCHAR));
+            attributes = calloc(attrSize, 1);
+            clauses = calloc(clauseSize, 1);
+
+            ImmGetCompositionStringW(imc, GCS_COMPSTR, buffer, textSize);
+            ImmGetCompositionStringW(imc, GCS_COMPATTR, attributes, attrSize);
+            ImmGetCompositionStringW(imc, GCS_COMPCLAUSE, clauses, clauseSize);
+
+            free(window->preeditText);
+            window->preeditText = calloc(length + 1, sizeof(unsigned int));
+            memcpy(window->preeditText, buffer, sizeof(unsigned int) * length);
+
+            focusedBlock = 0;
+
+            window->preeditBlockCount = clauseSize / sizeof(DWORD) - 1;
+            free(window->preeditBlocks);
+            window->preeditBlocks = calloc(window->preeditBlockCount, sizeof(int));
+
+            for (i = 0;  i < window->preeditBlockCount;  i++)
+            {
+                window->preeditBlocks[i] = clauses[i + 1] - clauses[i];
+                if (attributes[clauses[i]] != ATTR_CONVERTED)
+                    focusedBlock = i;
+            }
+
+            free(buffer);
+            free(attributes);
+            free(clauses);
+
+            _glfwInputPreedit(window, focusedBlock);
+            updateCaretPosition(window, imc);
+
+            ImmReleaseContext(hWnd, imc);
+            return TRUE;
+        }
+
+        case WM_IME_NOTIFY:
+        {
+            if (wParam == IMN_SETOPENSTATUS)
+                _glfwInputIMEStatus(window);
 
             break;
         }
@@ -2389,6 +2481,28 @@ VkResult _glfwPlatformCreateWindowSurface(VkInstance instance,
     }
 
     return err;
+}
+
+void _glfwPlatformResetPreeditText(_GLFWwindow* window)
+{
+    HIMC imc = ImmGetContext(window->win32.handle);
+    ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
+    ImmReleaseContext(window->win32.handle, imc);
+}
+
+void _glfwPlatformSetIMEStatus(_GLFWwindow* window, int active)
+{
+    HIMC imc = ImmGetContext(window->win32.handle);
+    ImmSetOpenStatus(imc, active);
+    ImmReleaseContext(window->win32.handle, imc);
+}
+
+int _glfwPlatformGetIMEStatus(_GLFWwindow* window)
+{
+    HIMC imc = ImmGetContext(window->win32.handle);
+    BOOL result = ImmGetOpenStatus(imc);
+    ImmReleaseContext(window->win32.handle, imc);
+    return result;
 }
 
 

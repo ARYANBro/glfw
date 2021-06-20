@@ -423,6 +423,16 @@ typedef struct _GLFWwindowX11
     // duplicate key events generated for some keys by ibus
     Time            keyPressTimes[256];
 
+    // Preedit callbacks
+    XIMCallback preeditStartCallback;
+    XIMCallback preeditDoneCallback;
+    XIMCallback preeditDrawCallback;
+    XIMCallback preeditCaretCallback;
+    XIMCallback statusStartCallback;
+    XIMCallback statusDoneCallback;
+    XIMCallback statusDrawCallback;
+
+    int imeFocus;
 } _GLFWwindowX11;
 
 // X11-specific global data

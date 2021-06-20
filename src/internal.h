@@ -402,13 +402,22 @@ struct _GLFWwindow
     int                 cursorMode;
     char                mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1];
     char                keys[GLFW_KEY_LAST + 1];
+
     // Virtual cursor position when cursor is disabled
     double              virtualCursorPosX, virtualCursorPosY;
     GLFWbool            rawMouseMotion;
 
+    // IME preedit data
+    unsigned int*       preeditText;
+    int*                preeditBlocks;
+    int                 preeditBlockCount;
+    int                 preeditCaretPosX, preeditCaretPosY;
+    int                 preeditCaretHeight;
+
     _GLFWcontext        context;
 
     struct {
+<<<<<<< HEAD
         GLFWwindowposfun          pos;
         GLFWwindowsizefun         size;
         GLFWwindowclosefun        close;
@@ -426,6 +435,26 @@ struct _GLFWwindow
         GLFWcharfun               character;
         GLFWcharmodsfun           charmods;
         GLFWdropfun               drop;
+=======
+        GLFWwindowposfun        pos;
+        GLFWwindowsizefun       size;
+        GLFWwindowclosefun      close;
+        GLFWwindowrefreshfun    refresh;
+        GLFWwindowfocusfun      focus;
+        GLFWwindowiconifyfun    iconify;
+        GLFWwindowmaximizefun   maximize;
+        GLFWframebuffersizefun  fbsize;
+        GLFWmousebuttonfun      mouseButton;
+        GLFWcursorposfun        cursorPos;
+        GLFWcursorenterfun      cursorEnter;
+        GLFWscrollfun           scroll;
+        GLFWkeyfun              key;
+        GLFWcharfun             character;
+        GLFWcharmodsfun         charmods;
+        GLFWpreeditfun          preedit;
+        GLFWimestatusfun        imestatus;
+        GLFWdropfun             drop;
+>>>>>>> glfw-premake-project
     } callbacks;
 
     // This is defined in the window API's platform.h
@@ -718,6 +747,46 @@ void _glfwPlatformDestroyMutex(_GLFWmutex* mutex);
 void _glfwPlatformLockMutex(_GLFWmutex* mutex);
 void _glfwPlatformUnlockMutex(_GLFWmutex* mutex);
 
+/*! @copydoc glfwResetPreeditText
+ *  @ingroup platform
+ */
+void _glfwPlatformResetPreeditText(_GLFWwindow* window);
+
+/*! @brief Sets whether the IME is enabled.
+ *
+ *  This function sets whether the IME is enabled.
+ *
+ *  @param[in] window The window.
+ *  @param[in] active Turns on IME if `GFLW_TRUE` is given. Otherwise (`GLFW_FALSE`) turns off.
+ *
+ *  @par Thread Safety
+ *  This function may only be called from the main thread.
+ *
+ *  @sa @ref preedit
+ *
+ *  @since Added in GLFW 3.X.
+ *
+ *  @ingroup platform
+ */
+void _glfwPlatformSetIMEStatus(_GLFWwindow* window, int active);
+
+/*! @brief Get IME status.
+ *
+ *  This function get IME status.
+ *
+ *  @param[in] window The window.
+ *  @return When IME is active, this function returns `GFLW_TRUE`. Otherwise `GLFW_FALSE`.
+ *
+ *  @par Thread Safety
+ *  This function may only be called from the main thread.
+ *
+ *  @sa @ref preedit
+ *
+ *  @since Added in GLFW 3.X.
+ *
+ *  @ingroup platform
+ */
+int  _glfwPlatformGetIMEStatus(_GLFWwindow* window);
 
 //////////////////////////////////////////////////////////////////////////
 //////                         GLFW event API                       //////
@@ -735,10 +804,54 @@ void _glfwInputWindowDamage(_GLFWwindow* window);
 void _glfwInputWindowCloseRequest(_GLFWwindow* window);
 void _glfwInputWindowMonitor(_GLFWwindow* window, _GLFWmonitor* monitor);
 
+<<<<<<< HEAD
 void _glfwInputKey(_GLFWwindow* window,
                    int key, int scancode, int action, int mods);
 void _glfwInputChar(_GLFWwindow* window,
                     unsigned int codepoint, int mods, GLFWbool plain);
+=======
+void _glfwInputWindowMonitorChange(_GLFWwindow* window, _GLFWmonitor* monitor);
+
+/*! @brief Notifies shared code of a physical key event.
+ *  @param[in] window The window that received the event.
+ *  @param[in] key The key that was pressed or released.
+ *  @param[in] scancode The system-specific scan code of the key.
+ *  @param[in] action @ref GLFW_PRESS or @ref GLFW_RELEASE.
+ *  @param[in] mods The modifiers pressed when the event was generated.
+ *  @ingroup event
+ */
+void _glfwInputKey(_GLFWwindow* window, int key, int scancode, int action, int mods);
+
+/*! @brief Notifies shared code of a Unicode character input event.
+ *  @param[in] window The window that received the event.
+ *  @param[in] codepoint The Unicode code point of the input character.
+ *  @param[in] mods Bit field describing which modifier keys were held down.
+ *  @param[in] plain `GLFW_TRUE` if the character is regular text input, or
+ *  `GLFW_FALSE` otherwise.
+ *  @ingroup event
+ */
+void _glfwInputChar(_GLFWwindow* window, unsigned int codepoint, int mods, GLFWbool plain);
+
+/*! @brief Notifies shared code of a IME preedit text update event.
+ *  @param[in] window The window that received the event.
+ *  @param[in] focusedBlock Focused preedit text block index.
+ *  @ingroup event
+ */
+void _glfwInputPreedit(_GLFWwindow* window, int focusedBlock);
+
+/*! @brief Notifies shared code of a IME status change.
+ *  @param[in] window The window that received the event.
+ *  @ingroup event
+ */
+void _glfwInputIMEStatus(_GLFWwindow* window);
+
+/*! @brief Notifies shared code of a scroll event.
+ *  @param[in] window The window that received the event.
+ *  @param[in] xoffset The scroll offset along the x-axis.
+ *  @param[in] yoffset The scroll offset along the y-axis.
+ *  @ingroup event
+ */
+>>>>>>> glfw-premake-project
 void _glfwInputScroll(_GLFWwindow* window, double xoffset, double yoffset);
 void _glfwInputMouseClick(_GLFWwindow* window, int button, int action, int mods);
 void _glfwInputCursorPos(_GLFWwindow* window, double xpos, double ypos);

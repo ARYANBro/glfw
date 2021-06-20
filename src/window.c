@@ -247,6 +247,10 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
             if (wndconfig.focused)
                 _glfwPlatformFocusWindow(window);
         }
+
+        window->preeditCaretPosX = 0;
+        window->preeditCaretPosY = height;
+        window->preeditCaretHeight = 0;
     }
 
     return (GLFWwindow*) window;
@@ -469,6 +473,9 @@ GLFWAPI void glfwDestroyWindow(GLFWwindow* handle)
         glfwMakeContextCurrent(NULL);
 
     _glfwPlatformDestroyWindow(window);
+
+    free(window->preeditText);
+    free(window->preeditBlocks);
 
     // Unlink window from global linked list
     {

@@ -323,8 +323,29 @@ void _glfwInputChar(_GLFWwindow* window, unsigned int codepoint, int mods, GLFWb
     }
 }
 
+<<<<<<< HEAD
 // Notifies shared code of a scroll event
 //
+=======
+void _glfwInputPreedit(_GLFWwindow* window, int focusedBlock)
+{
+    if (window->callbacks.preedit)
+    {
+        window->callbacks.preedit((GLFWwindow*) window,
+                                  window->preeditText,
+                                  window->preeditBlockCount,
+                                  window->preeditBlocks,
+                                  focusedBlock);
+    }
+}
+
+void _glfwInputIMEStatus(_GLFWwindow* window)
+{
+    if (window->callbacks.imestatus)
+        window->callbacks.imestatus((GLFWwindow*) window);
+}
+
+>>>>>>> glfw-premake-project
 void _glfwInputScroll(_GLFWwindow* window, double xoffset, double yoffset)
 {
     if (window->callbacks.scroll)
@@ -500,10 +521,18 @@ GLFWAPI int glfwGetInputMode(GLFWwindow* handle, int mode)
             return window->stickyKeys;
         case GLFW_STICKY_MOUSE_BUTTONS:
             return window->stickyMouseButtons;
+<<<<<<< HEAD
         case GLFW_LOCK_KEY_MODS:
             return window->lockKeyMods;
         case GLFW_RAW_MOUSE_MOTION:
             return window->rawMouseMotion;
+=======
+        case GLFW_IME:
+            return _glfwPlatformGetIMEStatus(window);
+        default:
+            _glfwInputError(GLFW_INVALID_ENUM, "Invalid input mode %i", mode);
+            return 0;
+>>>>>>> glfw-premake-project
     }
 
     _glfwInputError(GLFW_INVALID_ENUM, "Invalid input mode 0x%08X", mode);
@@ -592,12 +621,22 @@ GLFWAPI void glfwSetInputMode(GLFWwindow* handle, int mode, int value)
             return;
         }
 
+<<<<<<< HEAD
         value = value ? GLFW_TRUE : GLFW_FALSE;
         if (window->rawMouseMotion == value)
             return;
 
         window->rawMouseMotion = value;
         _glfwPlatformSetRawMouseMotion(window, value);
+=======
+        case GLFW_IME:
+            _glfwPlatformSetIMEStatus(window, value ? GLFW_TRUE : GLFW_FALSE);
+            break;
+
+        default:
+            _glfwInputError(GLFW_INVALID_ENUM, "Invalid input mode %i", mode);
+            break;
+>>>>>>> glfw-premake-project
     }
     else
         _glfwInputError(GLFW_INVALID_ENUM, "Invalid input mode 0x%08X", mode);
@@ -845,6 +884,50 @@ GLFWAPI void glfwSetCursor(GLFWwindow* windowHandle, GLFWcursor* cursorHandle)
     _glfwPlatformSetCursor(window, cursor);
 }
 
+GLFWAPI void glfwGetPreeditCaretPos(GLFWwindow* handle, int* xpos, int* ypos, int* height)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    if (xpos)
+        *xpos = 0;
+    if (ypos)
+        *ypos = 0;
+    if (height)
+        *height = 0;
+
+    _GLFW_REQUIRE_INIT();
+
+    if (xpos)
+        *xpos = window->preeditCaretPosX;
+    if (ypos)
+        *ypos = window->preeditCaretPosY;
+    if (height)
+        *height = window->preeditCaretHeight;
+}
+
+GLFWAPI void glfwSetPreeditCaretPos(GLFWwindow* handle, int xpos, int ypos, int height)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT();
+
+    window->preeditCaretPosX = xpos;
+    window->preeditCaretPosY = ypos;
+    window->preeditCaretHeight = height;
+}
+
+GLFWAPI void glfwResetPreeditText(GLFWwindow* handle)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT();
+
+    _glfwPlatformResetPreeditText(window);
+}
+
 GLFWAPI GLFWkeyfun glfwSetKeyCallback(GLFWwindow* handle, GLFWkeyfun cbfun)
 {
     _GLFWwindow* window = (_GLFWwindow*) handle;
@@ -872,6 +955,22 @@ GLFWAPI GLFWcharmodsfun glfwSetCharModsCallback(GLFWwindow* handle, GLFWcharmods
 
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
     _GLFW_SWAP_POINTERS(window->callbacks.charmods, cbfun);
+    return cbfun;
+}
+
+GLFWAPI GLFWpreeditfun glfwSetPreeditCallback(GLFWwindow* handle, GLFWpreeditfun cbfun)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+    _GLFW_SWAP_POINTERS(window->callbacks.preedit, cbfun);
+    return cbfun;
+}
+
+GLFWAPI GLFWimestatusfun glfwSetIMEStatusCallback(GLFWwindow* handle, GLFWimestatusfun cbfun)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+    _GLFW_SWAP_POINTERS(window->callbacks.imestatus, cbfun);
     return cbfun;
 }
 
