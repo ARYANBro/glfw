@@ -4,8 +4,8 @@ project "glfw"
 	language "C"
 	staticruntime "on"
 
-	targetdir("%{prj.location}/Bin/%{cfg.buildcfg}/%{prj.name}")
-	objdir("%{prj.location}/Obj/%{cfg.buildcfg}/%{prj.name}")
+	targetdir "%{prj.location}/Bin/%{cfg.buildcfg}/%{prj.name}"
+	objdir "%{prj.location}/Obj/%{cfg.buildcfg}/%{prj.name}"
 
 	files
 	{
